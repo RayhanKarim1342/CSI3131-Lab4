@@ -1,0 +1,19 @@
+// use: .\cmd_script.bat in Windows command line
+
+javac -cp ".;colt.jar;EvSchedSimul.jar" MemManage.java
+javac -cp ".;colt.jar;EvSchedSimul.jar" MemManageExp.java
+
+javac -cp ".;colt.jar;EvSchedSimul.jar" KernelFunctions.java
+
+
+javac -cp ".;colt.jar;EvSchedSimul.jar" FifoExp.java
+javac -cp ".;colt.jar;EvSchedSimul.jar" ClockExp.java
+javac -cp ".;colt.jar;EvSchedSimul.jar" LruExp.java
+javac -cp ".;colt.jar;EvSchedSimul.jar" CountExp.java
+
+
+
+java -cp ".;colt.jar;EvSchedSimul.jar" FifoExp
+java -cp ".;colt.jar;EvSchedSimul.jar" ClockExp
+java -cp ".;colt.jar;EvSchedSimul.jar" LruExp
+java -cp ".;colt.jar;EvSchedSimul.jar" CountExp
