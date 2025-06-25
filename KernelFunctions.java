@@ -97,6 +97,22 @@ public class KernelFunctions {
 
 	// CLOCK page Replacement algorithm
 	public static void pageReplAlgorithmCLOCK(int vpage, Process prc) {
+		int numFrames = prc.allocatedFrames.length;
+		while (true) {
+			int frame = prc.allocatedFrames[prc.framePtr];
+			int vPageCandidate = findvPage(prc.pageTable, frame);
+
+			if (!prc.pageTable[vPageCandidate].used) {
+				prc.pageTable[vPageCandidate].valid = false;
+				prc.pageTable[vpage].frameNum = frame;
+				prc.pageTable[vpage].valid = true;
+				prc.framePtr = (prc.framePtr + 1) % numFrames;
+				break;
+			} else {
+				prc.pageTable[vPageCandidate].used = false;
+				prc.framePtr = (prc.framePtr + 1) % numFrames;
+			}
+		}
 	}
 
 	// LRU page Replacement algorithm
