@@ -100,16 +100,16 @@ public class KernelFunctions {
 		int numFrames = prc.allocatedFrames.length;
 		while (true) {
 			int frame = prc.allocatedFrames[prc.framePtr];
-			int vPageCandidate = findvPage(prc.pageTable, frame);
+			int currentVPage = findvPage(prc.pageTable, frame);
 
-			if (!prc.pageTable[vPageCandidate].used) {
-				prc.pageTable[vPageCandidate].valid = false;
+			if (!prc.pageTable[currentVPage].used) {
+				prc.pageTable[currentVPage].valid = false;
 				prc.pageTable[vpage].frameNum = frame;
 				prc.pageTable[vpage].valid = true;
 				prc.framePtr = (prc.framePtr + 1) % numFrames;
 				break;
 			} else {
-				prc.pageTable[vPageCandidate].used = false;
+				prc.pageTable[currentVPage].used = false;
 				prc.framePtr = (prc.framePtr + 1) % numFrames;
 			}
 		}
