@@ -79,7 +79,15 @@ public class KernelFunctions {
 	public static void doneMemAccess(int vpage, Process prc, double clock) {
 		prc.pageTable[vpage].tmStamp = clock;
 		prc.pageTable[vpage].used = true;
-		prc.pageTable[vpage].count++;
+
+
+
+//		prc.pageTable[vpage].count++;
+
+		prc.pageTable[vpage].count |= 0x80;          // Set MSB to show recent use
+
+
+
 	}
 
 	// FIFO page Replacement algorithm
@@ -152,35 +160,37 @@ public class KernelFunctions {
 
 		int vPageReplaced = -1;
 		int frame = -1;
-		long leastCount = Integer.MAX_VALUE;
+		long minCount = Long.MAX_VALUE;
 
-		// Find the page with the lowest access count among allocated frames
+		// Age all pages (simulate time passing)
 		for (int i = 0; i < prc.numAllocatedFrames; i++) {
-			int currentFrame = prc.allocatedFrames[i];
-			int currentVPage = findvPage(prc.pageTable, currentFrame);
+			int frameIdx = prc.allocatedFrames[i];
+			int vp = findvPage(prc.pageTable, frameIdx);
+			prc.pageTable[vp].count >>= 1; // Age
+		}
 
-			if (prc.pageTable[currentVPage].count < leastCount) {
-				leastCount = prc.pageTable[currentVPage].count;
-				vPageReplaced = currentVPage;
-				frame = currentFrame;
+		// Find victim
+		for (int i = 0; i < prc.numAllocatedFrames; i++) {
+			int frameIdx = prc.allocatedFrames[i];
+			int vp = findvPage(prc.pageTable, frameIdx);
+			if (prc.pageTable[vp].count < minCount) {
+				minCount = prc.pageTable[vp].count;
+				vPageReplaced = vp;
+				frame = frameIdx;
 			}
 		}
 
-		// Evict the selected page
+		// Replace page
 		if (vPageReplaced != -1) {
 			prc.pageTable[vPageReplaced].valid = false;
-			prc.pageTable[vPageReplaced].count = 0; // Optional: reset count
 		} else {
 			System.out.println("Unable to find a replacement");
 			return;
 		}
 
-		// Load the new page
 		prc.pageTable[vpage].frameNum = frame;
 		prc.pageTable[vpage].valid = true;
-		prc.pageTable[vpage].count = 1; // Initialize count on first load
-
-
+		prc.pageTable[vpage].count = 0x80; // Mark as just used
 	}
 
 
