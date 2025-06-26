@@ -143,9 +143,49 @@ public class KernelFunctions {
 		prc.pageTable[vpage].valid = true;
 	}
 
+
+
+
+
 	// COUNT page Replacement algorithm
 	public static void pageReplAlgorithmCOUNT(int vpage, Process prc) {
+
+		int vPageReplaced = -1;
+		int frame = -1;
+		long leastCount = Integer.MAX_VALUE;
+
+		// Find the page with the lowest access count among allocated frames
+		for (int i = 0; i < prc.numAllocatedFrames; i++) {
+			int currentFrame = prc.allocatedFrames[i];
+			int currentVPage = findvPage(prc.pageTable, currentFrame);
+
+			if (prc.pageTable[currentVPage].count < leastCount) {
+				leastCount = prc.pageTable[currentVPage].count;
+				vPageReplaced = currentVPage;
+				frame = currentFrame;
+			}
+		}
+
+		// Evict the selected page
+		if (vPageReplaced != -1) {
+			prc.pageTable[vPageReplaced].valid = false;
+			prc.pageTable[vPageReplaced].count = 0; // Optional: reset count
+		} else {
+			System.out.println("Unable to find a replacement");
+			return;
+		}
+
+		// Load the new page
+		prc.pageTable[vpage].frameNum = frame;
+		prc.pageTable[vpage].valid = true;
+		prc.pageTable[vpage].count = 1; // Initialize count on first load
+
+
 	}
+
+
+
+
 
 	// finds the virtual page loaded in the specified frame fr
 	public static int findvPage(PgTblEntry[] ptbl, int fr) {
