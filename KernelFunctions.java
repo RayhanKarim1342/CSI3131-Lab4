@@ -80,13 +80,9 @@ public class KernelFunctions {
 		prc.pageTable[vpage].tmStamp = clock;
 		prc.pageTable[vpage].used = true;
 
+		// prc.pageTable[vpage].count++;
 
-
-//		prc.pageTable[vpage].count++;
-
-		prc.pageTable[vpage].count |= 0x80;          // Set MSB to show recent use
-
-
+		prc.pageTable[vpage].count++; // Set MSB to show recent use
 
 	}
 
@@ -151,51 +147,60 @@ public class KernelFunctions {
 		prc.pageTable[vpage].valid = true;
 	}
 
-
-
-
-
 	// COUNT page Replacement algorithm
 	public static void pageReplAlgorithmCOUNT(int vpage, Process prc) {
 
-		int vPageReplaced = -1;
-		int frame = -1;
+		int numFrames = prc.allocatedFrames.length;
+		int scans = 0;
+		int bestCandidate = -1;
 		long minCount = Long.MAX_VALUE;
 
-		// Age all pages (simulate time passing)
-		for (int i = 0; i < prc.numAllocatedFrames; i++) {
-			int frameIdx = prc.allocatedFrames[i];
-			int vp = findvPage(prc.pageTable, frameIdx);
-			prc.pageTable[vp].count >>= 1; // Age
+		// Phase 1: Try to find a quick candidate in memory
+		while (scans < numFrames) {
+			int frame = prc.allocatedFrames[prc.framePtr];
+			int currVPage = findvPage(prc.pageTable, frame);
+			PgTblEntry entry = prc.pageTable[currVPage];
+
+			if (!entry.used) {
+				if (entry.count < minCount) {
+					minCount = entry.count;
+					bestCandidate = currVPage;
+					break; // Found a good victim quickly
+				}
+			} else {
+				entry.used = false; // Clear the used bit
+			}
+
+			prc.framePtr = (prc.framePtr + 1) % numFrames;
+			scans++;
 		}
 
-		// Find victim
-		for (int i = 0; i < prc.numAllocatedFrames; i++) {
-			int frameIdx = prc.allocatedFrames[i];
-			int vp = findvPage(prc.pageTable, frameIdx);
-			if (prc.pageTable[vp].count < minCount) {
-				minCount = prc.pageTable[vp].count;
-				vPageReplaced = vp;
-				frame = frameIdx;
+		// Phase 2: If no ideal candidate found, fall back on lowest count
+		if (bestCandidate == -1) {
+			for (int i = 0; i < numFrames; i++) {
+				int frame = prc.allocatedFrames[i];
+				int currVPage = findvPage(prc.pageTable, frame);
+				PgTblEntry entry = prc.pageTable[currVPage];
+
+				if (entry.count < minCount) {
+					minCount = entry.count;
+					bestCandidate = currVPage;
+				}
 			}
 		}
 
-		// Replace page
-		if (vPageReplaced != -1) {
-			prc.pageTable[vPageReplaced].valid = false;
+		// Perform replacement
+		if (bestCandidate != -1) {
+			int frame = prc.pageTable[bestCandidate].frameNum;
+			prc.pageTable[bestCandidate].valid = false;
+
+			prc.pageTable[vpage].frameNum = frame;
+			prc.pageTable[vpage].valid = true;
 		} else {
-			System.out.println("Unable to find a replacement");
-			return;
+			System.out.println("No eviction candidate found.");
 		}
 
-		prc.pageTable[vpage].frameNum = frame;
-		prc.pageTable[vpage].valid = true;
-		prc.pageTable[vpage].count = 0x80; // Mark as just used
 	}
-
-
-
-
 
 	// finds the virtual page loaded in the specified frame fr
 	public static int findvPage(PgTblEntry[] ptbl, int fr) {
